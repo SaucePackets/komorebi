@@ -736,6 +736,40 @@ mod tests {
     use crossbeam_channel::Sender;
     use std::path::PathBuf;
     use uuid::Uuid;
+    use windows::Win32::Devices::Display::DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY;
+    use windows::Win32::Foundation::RECT;
+
+    // Creating a Mock Display Provider
+    #[derive(Clone)]
+    struct MockDevice {
+        hmonitor: isize,
+        device_path: String,
+        device_name: String,
+        device_description: String,
+        serial_number_id: Option<String>,
+        size: RECT,
+        work_area_size: RECT,
+        device_key: String,
+        output_technology: Option<DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY>,
+    }
+
+    impl From<MockDevice> for win32_display_data::Device {
+        fn from(mock: MockDevice) -> Self {
+            win32_display_data::Device {
+                hmonitor: mock.hmonitor,
+                device_path: mock.device_path,
+                device_name: mock.device_name,
+                device_description: mock.device_description,
+                serial_number_id: mock.serial_number_id,
+                size: mock.size,
+                work_area_size: mock.work_area_size,
+                device_key: mock.device_key,
+                output_technology: mock.output_technology,
+            }
+        }
+    }
+
+    // Creating a Window Manager Instance
     struct TestContext {
         socket_path: Option<PathBuf>,
     }
@@ -923,6 +957,48 @@ mod tests {
                 assert_eq!(notification, MonitorNotification::DisplayConnectionChange);
             }
             Err(e) => panic!("Failed to receive MonitorNotification: {}", e),
+        }
+    }
+
+    #[test]
+    fn test_attached_display_devices() {
+        // Define mock display data
+        let mock_device = MockDevice {
+            hmonitor: 1,
+            device_path: String::from(
+                "\\\\?\\DISPLAY#ABC123#4&123456&0&UID0#{saucepackets-4321-5678-2468-abc123456789}",
+            ),
+            device_name: String::from("\\\\.\\DISPLAY1"),
+            device_description: String::from("Display description"),
+            serial_number_id: Some(String::from("SaucePackets123")),
+            device_key: String::from("Mock Key"),
+            size: RECT {
+                left: 0,
+                top: 0,
+                right: 1920,
+                bottom: 1080,
+            },
+            work_area_size: RECT {
+                left: 0,
+                top: 0,
+                right: 1920,
+                bottom: 1080,
+            },
+            output_technology: Some(DISPLAYCONFIG_VIDEO_OUTPUT_TECHNOLOGY(0)),
+        };
+
+        let display_provider = || {
+            vec![Ok::<win32_display_data::Device, win32_display_data::Error>(
+                win32_display_data::Device::from(mock_device.clone()),
+            )]
+            .into_iter()
+        };
+
+        let result = attached_display_devices(display_provider).ok();
+        if let Some(monitors) = result {
+            assert_eq!(monitors.len(), 1, "Expected one monitor");
+        } else {
+            panic!("No monitors found");
         }
     }
 }
