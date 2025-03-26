@@ -996,7 +996,29 @@ mod tests {
 
         let result = attached_display_devices(display_provider).ok();
         if let Some(monitors) = result {
+            // Check Number of monitors
             assert_eq!(monitors.len(), 1, "Expected one monitor");
+
+            // hmonitor
+            assert_eq!(monitors[0].id(), 1);
+
+            // device name
+            assert_eq!(monitors[0].name(), &String::from("DISPLAY1"));
+
+            // Device
+            assert_eq!(monitors[0].device(), &String::from("ABC123"));
+
+            // Device ID
+            assert_eq!(
+                monitors[0].device_id(),
+                &String::from("ABC123-4&123456&0&UID0")
+            );
+
+            // Check monitor serial number id
+            assert_eq!(
+                monitors[0].serial_number_id,
+                Some(String::from("SaucePackets123")),
+            );
         } else {
             panic!("No monitors found");
         }
