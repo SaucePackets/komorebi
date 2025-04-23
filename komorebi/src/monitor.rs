@@ -774,4 +774,80 @@ mod tests {
         m.ensure_workspace_count(3);
         assert_eq!(m.workspaces().len(), 5, "Monitor should have 5 workspaces");
     }
+
+    #[test]
+    fn test_focused_workspace_name() {
+        let mut m = Monitor::new(
+            0,
+            Rect::default(),
+            Rect::default(),
+            "TestMonitor".to_string(),
+            "TestDevice".to_string(),
+            "TestDeviceID".to_string(),
+            Some("TestMonitorID".to_string()),
+        );
+
+        {
+            // Set workspace name and check if the name was added to the workspace and if the
+            // correct workspace name is returned
+            let workspace = m.focused_workspace_mut().unwrap();
+            workspace.set_name(Some("SaucePacketsWorkspace1".to_string()));
+            assert_eq!(
+                workspace.name(),
+                &Some("SaucePacketsWorkspace1".to_string())
+            );
+            assert_eq!(
+                m.focused_workspace_name(),
+                Some("SaucePacketsWorkspace1".to_string())
+            );
+            assert_eq!(m.focused_workspace_idx(), 0);
+        }
+
+        {
+            // Add another workspace and check the index
+            let new_workspace_idx = m.new_workspace_idx();
+            m.focus_workspace(new_workspace_idx).unwrap();
+            assert_eq!(m.workspaces().len(), 2);
+            assert_eq!(m.focused_workspace_idx(), 1);
+        }
+
+        {
+            // Set workspace name and check if the name was added to the workspace and if the
+            // correct workspace name is returned
+            let workspace = m.focused_workspace_mut().unwrap();
+            workspace.set_name(Some("SaucePacketsWorkspace2".to_string()));
+            assert_eq!(
+                workspace.name(),
+                &Some("SaucePacketsWorkspace2".to_string())
+            );
+            assert_eq!(
+                m.focused_workspace_name(),
+                Some("SaucePacketsWorkspace2".to_string())
+            );
+            assert_eq!(m.focused_workspace_idx(), 1);
+        }
+
+        {
+            // Add another workspace and check the index
+            let new_workspace_idx = m.new_workspace_idx();
+            m.focus_workspace(new_workspace_idx).unwrap();
+            assert_eq!(m.workspaces().len(), 3);
+            assert_eq!(m.focused_workspace_idx(), 2);
+        }
+
+        {
+            // Set workspace name and check if the name was added to the workspace and if the
+            // correct workspace name is returned
+            let workspace = m.focused_workspace_mut().unwrap();
+            workspace.set_name(Some("SaucePacketsWorkspace3".to_string()));
+            assert_eq!(
+                workspace.name(),
+                &Some("SaucePacketsWorkspace3".to_string())
+            );
+            assert_eq!(
+                m.focused_workspace_name(),
+                Some("SaucePacketsWorkspace3".to_string())
+            );
+        }
+    }
 }
