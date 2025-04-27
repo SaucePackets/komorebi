@@ -63,6 +63,7 @@ use crate::FloatingLayerBehaviour;
 use crate::Placement;
 use crate::PredefinedAspectRatio;
 use crate::ResolvedPathBuf;
+use crate::WindowHandlingBehaviour;
 use crate::DATA_DIR;
 use crate::DEFAULT_CONTAINER_PADDING;
 use crate::DEFAULT_WORKSPACE_PADDING;
@@ -83,6 +84,7 @@ use crate::SLOW_APPLICATION_IDENTIFIERS;
 use crate::TRANSPARENCY_BLACKLIST;
 use crate::TRAY_AND_MULTI_WINDOW_IDENTIFIERS;
 use crate::WINDOWS_11;
+use crate::WINDOW_HANDLING_BEHAVIOUR;
 use crate::WORKSPACE_MATCHING_RULES;
 use color_eyre::Result;
 use crossbeam_channel::Receiver;
@@ -560,6 +562,9 @@ pub struct StaticConfig {
     /// Aspect ratio to resize with when toggling floating mode for a window
     #[serde(skip_serializing_if = "Option::is_none")]
     pub floating_window_aspect_ratio: Option<AspectRatio>,
+    /// Which Windows API behaviour to use when manipulating windows (default: Sync)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub window_handling_behaviour: Option<WindowHandlingBehaviour>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -921,6 +926,7 @@ impl From<&WindowManager> for StaticConfig {
             bar_configurations: None,
             remove_titlebar_applications: Option::from(NO_TITLEBAR.lock().clone()),
             floating_window_aspect_ratio: Option::from(*FLOATING_WINDOW_TOGGLE_ASPECT_RATIO.lock()),
+            window_handling_behaviour: Option::from(WINDOW_HANDLING_BEHAVIOUR.load()),
         }
     }
 }
@@ -1206,6 +1212,10 @@ impl StaticConfig {
                     }
                 }
             }
+        }
+
+        if let Some(behaviour) = self.window_handling_behaviour {
+            WINDOW_HANDLING_BEHAVIOUR.store(behaviour);
         }
 
         Ok(())
