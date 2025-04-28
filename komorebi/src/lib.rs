@@ -409,3 +409,36 @@ pub fn load_configuration() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::env;
+    use std::fs;
+
+    #[test]
+    fn test_load_configuration() {
+        // Create a temporary directory
+        let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+        let temp_path = temp_dir.path();
+
+        // Set the HOME_DIR to the temporary directory
+        let original_home_dir = env::var("KOMOREBI_CONFIG_HOME").ok();
+        env::set_var("KOMOREBI_CONFIG_HOME", temp_path);
+
+        // Create a mock PowerShell config
+        let config_pwsh = temp_path.join("komorebi.ps1");
+        fs::write(&config_pwsh, "Write-Output 'Mock PowerShell Config'").expect("Failed to write mock config");
+
+        // Call load_configuration
+        let result = load_configuration();
+        assert!(result.is_ok(), "Failed to load configuration");
+
+        // Clean up
+        if let Some(original) = original_home_dir {
+            env::set_var("KOMOREBI_CONFIG_HOME", original);
+        } else {
+            env::remove_var("KOMOREBI_CONFIG_HOME");
+        }
+    }
+}

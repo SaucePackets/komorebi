@@ -2950,6 +2950,7 @@ dependencies = [
  "shadow-rs",
  "strum 0.27.1",
  "sysinfo 0.34.2",
+ "tempfile",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
